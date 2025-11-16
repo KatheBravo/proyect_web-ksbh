@@ -1,4 +1,4 @@
-package com.example.regata.web.dto;
+package com.example.regata.web;
 
 import com.example.regata.service.AuthService;
 import com.example.regata.web.dto.AuthResponse;

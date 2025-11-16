@@ -7,7 +7,7 @@ import java.time.Instant;
 @Table(name = "auth_sessions", indexes = {
         @Index(name = "idx_session_token", columnList = "token", unique = true)
 })
-public class AuthSession {
+public class  AuthSession {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
