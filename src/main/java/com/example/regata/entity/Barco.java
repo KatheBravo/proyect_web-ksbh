@@ -14,14 +14,13 @@ public class Barco {
     @Column(nullable = false, length = 80)
     private String nombre;
 
-    /** color CSS (#RRGGBB o nombre) */
     @Column(length = 20)
     private String color;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "jugador_id", nullable = false,
+    @JoinColumn(name = "jugador_id", nullable = false, // mantenemos el nombre de columna
             foreignKey = @ForeignKey(name = "fk_barco_jugador"))
-    private Jugador jugador;
+    private Usuario usuario;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "modelo_id", nullable = false,
@@ -48,16 +47,22 @@ public class Barco {
     // Getters y Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
+
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
-    public Jugador getJugador() { return jugador; }
-    public void setJugador(Jugador jugador) { this.jugador = jugador; }
+
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
+
     public ModeloBarco getModelo() { return modelo; }
     public void setModelo(ModeloBarco modelo) { this.modelo = modelo; }
+
     public Instant getCreadoEn() { return creadoEn; }
     public void setCreadoEn(Instant creadoEn) { this.creadoEn = creadoEn; }
+
     public Instant getActualizadoEn() { return actualizadoEn; }
     public void setActualizadoEn(Instant actualizadoEn) { this.actualizadoEn = actualizadoEn; }
 }

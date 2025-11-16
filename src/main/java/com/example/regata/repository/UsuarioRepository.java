@@ -1,11 +1,11 @@
 package com.example.regata.repository;
 
-import com.example.regata.entity.Jugador;
+import com.example.regata.entity.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
 
-public interface JugadorRepository extends JpaRepository<Jugador, Long> {
+public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     boolean existsByEmail(String email);
-    Optional<Jugador> findByEmail(String email);
+    Optional<Usuario> findByEmail(String email);
 }

@@ -5,12 +5,11 @@ import java.time.Instant;
 
 @Entity
 @Table(name = "jugadores", uniqueConstraints = {
-        @UniqueConstraint(name = "uq_jugador_email", columnNames = {"email"})
+        @UniqueConstraint(name = "uq_usuario_email", columnNames = {"email"})
 })
-public class Jugador {
+public class Usuario {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 100)
@@ -19,8 +18,12 @@ public class Jugador {
     @Column(nullable = false, unique = true, length = 120)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 120)
+    @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role = Role.PLAYER;
 
     @Column(nullable = false)
     private boolean activo = true;
@@ -35,14 +38,13 @@ public class Jugador {
     void prePersist() {
         creadoEn = Instant.now();
         actualizadoEn = creadoEn;
+        if (role == null) role = Role.PLAYER;
     }
 
     @PreUpdate
-    void preUpdate() {
-        actualizadoEn = Instant.now();
-    }
+    void preUpdate() { actualizadoEn = Instant.now(); }
 
-    // Getters y Setters
+    // Getters/Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -54,6 +56,9 @@ public class Jugador {
 
     public String getPasswordHash() { return passwordHash; }
     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 
     public boolean isActivo() { return activo; }
     public void setActivo(boolean activo) { this.activo = activo; }

@@ -7,16 +7,18 @@ import java.time.Instant;
 @Table(name = "auth_sessions", indexes = {
         @Index(name = "idx_session_token", columnList = "token", unique = true)
 })
-public class  AuthSession {
+public class AuthSession {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Mantenemos la columna 'jugador_id' para no romper la BD,
+    // pero el tipo ahora es Usuario
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "jugador_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_session_jugador"))
-    private Jugador jugador;
+    private Usuario usuario;
 
     @Column(nullable = false, unique = true, length = 64)
     private String token;
@@ -41,8 +43,8 @@ public class  AuthSession {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Jugador getJugador() { return jugador; }
-    public void setJugador(Jugador jugador) { this.jugador = jugador; }
+    public Usuario getUsuario() { return usuario; }
+    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
 
     public String getToken() { return token; }
     public void setToken(String token) { this.token = token; }
