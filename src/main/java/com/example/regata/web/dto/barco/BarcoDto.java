@@ -6,11 +6,17 @@ public class BarcoDto {
     private String nombre;
     private String color;
 
-    private Long usuarioId;       // antes: jugadorId
-    private String usuarioNombre; // antes: jugadorNombre
+    private Long usuarioId;
+    private String usuarioNombre;
 
     private Long modeloId;
     private String modeloNombre;
+
+    // NUEVO
+    private int posX;
+    private int posY;
+    private int velX;
+    private int velY;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -32,4 +38,16 @@ public class BarcoDto {
 
     public String getModeloNombre() { return modeloNombre; }
     public void setModeloNombre(String modeloNombre) { this.modeloNombre = modeloNombre; }
+
+    public int getPosX() { return posX; }
+    public void setPosX(int posX) { this.posX = posX; }
+
+    public int getPosY() { return posY; }
+    public void setPosY(int posY) { this.posY = posY; }
+
+    public int getVelX() { return velX; }
+    public void setVelX(int velX) { this.velX = velX; }
+
+    public int getVelY() { return velY; }
+    public void setVelY(int velY) { this.velY = velY; }
 }

@@ -18,7 +18,7 @@ public class Barco {
     private String color;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "jugador_id", nullable = false, // mantenemos el nombre de columna
+    @JoinColumn(name = "jugador_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_barco_jugador"))
     private Usuario usuario;
 
@@ -26,6 +26,20 @@ public class Barco {
     @JoinColumn(name = "modelo_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_barco_modelo"))
     private ModeloBarco modelo;
+
+    // --- NUEVO: posición (fila/col) y velocidad (dr/dc) ---
+    // Convención: posY = fila (r), posX = columna (c) del mapa ASCII.
+    @Column(name = "pos_x", nullable = false)
+    private int posX = 0;
+
+    @Column(name = "pos_y", nullable = false)
+    private int posY = 0;
+
+    @Column(name = "vel_x", nullable = false)
+    private int velX = 0;
+
+    @Column(name = "vel_y", nullable = false)
+    private int velY = 0;
 
     @Column(name = "creado_en", nullable = false)
     private Instant creadoEn;
@@ -59,6 +73,18 @@ public class Barco {
 
     public ModeloBarco getModelo() { return modelo; }
     public void setModelo(ModeloBarco modelo) { this.modelo = modelo; }
+
+    public int getPosX() { return posX; }
+    public void setPosX(int posX) { this.posX = posX; }
+
+    public int getPosY() { return posY; }
+    public void setPosY(int posY) { this.posY = posY; }
+
+    public int getVelX() { return velX; }
+    public void setVelX(int velX) { this.velX = velX; }
+
+    public int getVelY() { return velY; }
+    public void setVelY(int velY) { this.velY = velY; }
 
     public Instant getCreadoEn() { return creadoEn; }
     public void setCreadoEn(Instant creadoEn) { this.creadoEn = creadoEn; }

@@ -43,6 +43,12 @@ public class BarcoServiceImpl implements BarcoService {
         b.setUsuario(owner);
         b.setModelo(modelo);
 
+        // NUEVO: si no vienen, quedan en 0
+        b.setPosX(req.getPosX() != null ? req.getPosX() : 0);
+        b.setPosY(req.getPosY() != null ? req.getPosY() : 0);
+        b.setVelX(req.getVelX() != null ? req.getVelX() : 0);
+        b.setVelY(req.getVelY() != null ? req.getVelY() : 0);
+
         b = barcoRepo.save(b);
         return toDto(b);
     }
@@ -58,7 +64,7 @@ public class BarcoServiceImpl implements BarcoService {
     public List<BarcoDto> list(Long usuarioId) {
         List<Barco> barcos = (usuarioId == null)
                 ? barcoRepo.findAll()
-                : barcoRepo.findByUsuarioId(usuarioId); // <-- usar repo, no filtrar en memoria
+                : barcoRepo.findByUsuarioId(usuarioId);
         return barcos.stream().map(this::toDto).toList();
     }
 
@@ -76,6 +82,12 @@ public class BarcoServiceImpl implements BarcoService {
         b.setColor(req.getColor());
         b.setUsuario(newOwner);
         b.setModelo(newModelo);
+
+        // NUEVO (PUT: requeridos)
+        b.setPosX(req.getPosX());
+        b.setPosY(req.getPosY());
+        b.setVelX(req.getVelX());
+        b.setVelY(req.getVelY());
 
         b = barcoRepo.save(b);
         return toDto(b);
@@ -98,6 +110,12 @@ public class BarcoServiceImpl implements BarcoService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "modeloId no existe"));
             b.setModelo(newModelo);
         }
+
+        // NUEVO (PATCH: opcionales)
+        if (req.getPosX() != null) b.setPosX(req.getPosX());
+        if (req.getPosY() != null) b.setPosY(req.getPosY());
+        if (req.getVelX() != null) b.setVelX(req.getVelX());
+        if (req.getVelY() != null) b.setVelY(req.getVelY());
 
         b = barcoRepo.save(b);
         return toDto(b);
@@ -123,6 +141,11 @@ public class BarcoServiceImpl implements BarcoService {
             d.setModeloId(b.getModelo().getId());
             d.setModeloNombre(b.getModelo().getNombre());
         }
+        // NUEVO
+        d.setPosX(b.getPosX());
+        d.setPosY(b.getPosY());
+        d.setVelX(b.getVelX());
+        d.setVelY(b.getVelY());
         return d;
     }
 }
