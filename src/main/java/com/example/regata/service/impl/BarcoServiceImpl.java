@@ -43,7 +43,7 @@ public class BarcoServiceImpl implements BarcoService {
         b.setUsuario(owner);
         b.setModelo(modelo);
 
-        // NUEVO: si no vienen, quedan en 0
+        // si no vienen, quedan en 0
         b.setPosX(req.getPosX() != null ? req.getPosX() : 0);
         b.setPosY(req.getPosY() != null ? req.getPosY() : 0);
         b.setVelX(req.getVelX() != null ? req.getVelX() : 0);
@@ -83,7 +83,7 @@ public class BarcoServiceImpl implements BarcoService {
         b.setUsuario(newOwner);
         b.setModelo(newModelo);
 
-        // NUEVO (PUT: requeridos)
+        // (PUT: requeridos)
         b.setPosX(req.getPosX());
         b.setPosY(req.getPosY());
         b.setVelX(req.getVelX());
@@ -141,7 +141,7 @@ public class BarcoServiceImpl implements BarcoService {
             d.setModeloId(b.getModelo().getId());
             d.setModeloNombre(b.getModelo().getNombre());
         }
-        // NUEVO
+        //
         d.setPosX(b.getPosX());
         d.setPosY(b.getPosY());
         d.setVelX(b.getVelX());
