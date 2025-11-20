@@ -20,7 +20,7 @@ public class AuthSession {
             foreignKey = @ForeignKey(name = "fk_session_jugador"))
     private Usuario usuario;
 
-    @Column(nullable = false, unique = true, length = 64)
+    @Column(name = "token", length = 1024, nullable = false, unique = true)
     private String token;
 
     @Column(name = "creado_en", nullable = false)

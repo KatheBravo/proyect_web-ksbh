@@ -4,6 +4,7 @@ import com.example.regata.entity.AuthSession;
 import com.example.regata.entity.Usuario;
 import com.example.regata.repository.AuthSessionRepository;
 import com.example.regata.repository.UsuarioRepository;
+import com.example.regata.security.JwtService;
 import com.example.regata.service.AuthService;
 import com.example.regata.web.dto.AuthResponse;
 import com.example.regata.web.dto.LoginRequest;
@@ -15,7 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.UUID;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -23,13 +25,16 @@ public class AuthServiceImpl implements AuthService {
     private final UsuarioRepository usuarioRepository;
     private final AuthSessionRepository sessionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
     public AuthServiceImpl(UsuarioRepository usuarioRepository,
                            AuthSessionRepository sessionRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           JwtService jwtService) {          // 👈 inyectamos JwtService
         this.usuarioRepository = usuarioRepository;
         this.sessionRepository = sessionRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -45,7 +50,7 @@ public class AuthServiceImpl implements AuthService {
 
         AuthSession s = nuevaSesion(u);
         sessionRepository.save(s);
-        return AuthResponse.ofTokenAndUsuario(s.getToken(), u); // <-- cambia a Usuario
+        return AuthResponse.ofTokenAndUsuario(s.getToken(), u);
     }
 
     @Override
@@ -62,15 +67,24 @@ public class AuthServiceImpl implements AuthService {
 
         AuthSession s = nuevaSesion(u);
         sessionRepository.save(s);
-        return AuthResponse.ofTokenAndUsuario(s.getToken(), u); // <-- cambia a Usuario
+        return AuthResponse.ofTokenAndUsuario(s.getToken(), u);
     }
 
     private AuthSession nuevaSesion(Usuario u) {
         AuthSession s = new AuthSession();
-        s.setUsuario(u); // <-- cambia a Usuario
-        s.setToken(UUID.randomUUID().toString().replace("-", ""));
+        s.setUsuario(u);
+
+        // 👇 Aquí generamos el JWT firmado con tu jwt-private.pem
+        String jwt = jwtService.createAccessToken(
+                u.getId(),                     // asumo que es Long
+                u.getEmail(),
+                List.of("USER"),               // aquí metes los roles que quieras
+                Map.of("nombre", u.getNombre())
+        );
+
+        s.setToken(jwt);
         s.setCreadoEn(Instant.now());
-        s.setExpiraEn(Instant.now().plus(24, ChronoUnit.HOURS));
+        s.setExpiraEn(Instant.now().plus(24, ChronoUnit.HOURS)); // 24h, igual que access-token-ttl
         s.setActivo(true);
         return s;
     }
