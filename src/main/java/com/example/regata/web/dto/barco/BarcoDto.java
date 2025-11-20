@@ -4,13 +4,14 @@ public class BarcoDto {
 
     private Long id;
     private String nombre;
-    private String color;
 
     private Long usuarioId;
     private String usuarioNombre;
 
     private Long modeloId;
     private String modeloNombre;
+    // 🔥 si quieres, puedes agregar aquí:
+    // private String modeloColor;
 
     // NUEVO
     private int posX;
@@ -23,9 +24,6 @@ public class BarcoDto {
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-
-    public String getColor() { return color; }
-    public void setColor(String color) { this.color = color; }
 
     public Long getUsuarioId() { return usuarioId; }
     public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }

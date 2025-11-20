@@ -11,6 +11,9 @@ public class UpdateModeloBarcoRequest {
     @Size(max = 80)
     private String nombre;
 
+    @Size(max = 20)
+    private String color;
+
     @Size(max = 255)
     private String descripcion;
 
@@ -25,12 +28,19 @@ public class UpdateModeloBarcoRequest {
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
+
+    public String getColor() { return color; }
+    public void setColor(String color) { this.color = color; }
+
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+
     public int getVelMax() { return velMax; }
     public void setVelMax(int velMax) { this.velMax = velMax; }
+
     public int getAcelMax() { return acelMax; }
     public void setAcelMax(int acelMax) { this.acelMax = acelMax; }
+
     public int getManiobrabilidad() { return maniobrabilidad; }
     public void setManiobrabilidad(int maniobrabilidad) { this.maniobrabilidad = maniobrabilidad; }
 }

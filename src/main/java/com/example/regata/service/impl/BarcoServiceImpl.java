@@ -32,14 +32,23 @@ public class BarcoServiceImpl implements BarcoService {
     @Override
     public BarcoDto create(CreateBarcoRequest req) {
         Usuario owner = usuarioRepo.findById(req.getUsuarioId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "usuarioId no existe"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY, "usuarioId no existe"));
 
         ModeloBarco modelo = modeloRepo.findById(req.getModeloId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "modeloId no existe"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY, "modeloId no existe"));
+
+        // Regla: solo modelos públicos o creados por el mismo usuario (si aplicas la idea)
+        if (!modelo.isPublico()
+                && (modelo.getCreadoPor() == null
+                || !modelo.getCreadoPor().getId().equals(owner.getId()))) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "El usuario no puede usar este modelo");
+        }
 
         Barco b = new Barco();
         b.setNombre(req.getNombre());
-        b.setColor(req.getColor());
         b.setUsuario(owner);
         b.setModelo(modelo);
 
@@ -56,7 +65,8 @@ public class BarcoServiceImpl implements BarcoService {
     @Override
     public BarcoDto get(Long id) {
         Barco b = barcoRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Barco no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Barco no encontrado"));
         return toDto(b);
     }
 
@@ -71,15 +81,26 @@ public class BarcoServiceImpl implements BarcoService {
     @Override
     public BarcoDto updatePut(Long id, UpdateBarcoRequest req) {
         Barco b = barcoRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Barco no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Barco no encontrado"));
 
         Usuario newOwner = usuarioRepo.findById(req.getUsuarioId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "usuarioId no existe"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY, "usuarioId no existe"));
+
         ModeloBarco newModelo = modeloRepo.findById(req.getModeloId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "modeloId no existe"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNPROCESSABLE_ENTITY, "modeloId no existe"));
+
+        // Regla: solo modelos públicos o propios del owner nuevo
+        if (!newModelo.isPublico()
+                && (newModelo.getCreadoPor() == null
+                || !newModelo.getCreadoPor().getId().equals(newOwner.getId()))) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "El usuario no puede usar este modelo");
+        }
 
         b.setNombre(req.getNombre());
-        b.setColor(req.getColor());
         b.setUsuario(newOwner);
         b.setModelo(newModelo);
 
@@ -96,18 +117,35 @@ public class BarcoServiceImpl implements BarcoService {
     @Override
     public BarcoDto updatePatch(Long id, PatchBarcoRequest req) {
         Barco b = barcoRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Barco no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Barco no encontrado"));
 
-        if (req.getNombre() != null) b.setNombre(req.getNombre());
-        if (req.getColor() != null) b.setColor(req.getColor());
+        // Primero, si cambia el owner, actualizamos el usuario
         if (req.getUsuarioId() != null) {
             Usuario newOwner = usuarioRepo.findById(req.getUsuarioId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "usuarioId no existe"));
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.UNPROCESSABLE_ENTITY, "usuarioId no existe"));
             b.setUsuario(newOwner);
         }
+
+        if (req.getNombre() != null) {
+            b.setNombre(req.getNombre());
+        }
+
+        // Si cambia el modelo, validar contra el usuario actual (ya actualizado si venía usuarioId)
         if (req.getModeloId() != null) {
             ModeloBarco newModelo = modeloRepo.findById(req.getModeloId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "modeloId no existe"));
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.UNPROCESSABLE_ENTITY, "modeloId no existe"));
+
+            Usuario ownerActual = b.getUsuario();
+            if (!newModelo.isPublico()
+                    && (newModelo.getCreadoPor() == null
+                    || !newModelo.getCreadoPor().getId().equals(ownerActual.getId()))) {
+                throw new ResponseStatusException(
+                        HttpStatus.FORBIDDEN, "El usuario no puede usar este modelo");
+            }
+
             b.setModelo(newModelo);
         }
 
@@ -124,7 +162,8 @@ public class BarcoServiceImpl implements BarcoService {
     @Override
     public void delete(Long id) {
         Barco b = barcoRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Barco no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Barco no encontrado"));
         barcoRepo.delete(b);
     }
 
@@ -132,20 +171,22 @@ public class BarcoServiceImpl implements BarcoService {
         BarcoDto d = new BarcoDto();
         d.setId(b.getId());
         d.setNombre(b.getNombre());
-        d.setColor(b.getColor());
+
         if (b.getUsuario() != null) {
             d.setUsuarioId(b.getUsuario().getId());
             d.setUsuarioNombre(b.getUsuario().getNombre());
         }
+
         if (b.getModelo() != null) {
             d.setModeloId(b.getModelo().getId());
             d.setModeloNombre(b.getModelo().getNombre());
         }
-        //
+
         d.setPosX(b.getPosX());
         d.setPosY(b.getPosY());
         d.setVelX(b.getVelX());
         d.setVelY(b.getVelY());
+
         return d;
     }
 }

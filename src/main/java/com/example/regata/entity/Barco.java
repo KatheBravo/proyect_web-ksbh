@@ -14,9 +14,6 @@ public class Barco {
     @Column(nullable = false, length = 80)
     private String nombre;
 
-    @Column(length = 20)
-    private String color;
-
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "jugador_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_barco_jugador"))
@@ -27,7 +24,7 @@ public class Barco {
             foreignKey = @ForeignKey(name = "fk_barco_modelo"))
     private ModeloBarco modelo;
 
-    // --- NUEVO: posición (fila/col) y velocidad (dr/dc) ---
+    // --- posición (fila/col) y velocidad (dr/dc) ---
     // Convención: posY = fila (r), posX = columna (c) del mapa ASCII.
     @Column(name = "pos_x", nullable = false)
     private int posX = 0;
@@ -64,9 +61,6 @@ public class Barco {
 
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-
-    public String getColor() { return color; }
-    public void setColor(String color) { this.color = color; }
 
     public Usuario getUsuario() { return usuario; }
     public void setUsuario(Usuario usuario) { this.usuario = usuario; }

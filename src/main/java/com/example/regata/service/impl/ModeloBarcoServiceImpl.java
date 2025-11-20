@@ -22,15 +22,28 @@ public class ModeloBarcoServiceImpl implements ModeloBarcoService {
 
     @Override
     public ModeloBarcoDto create(CreateModeloBarcoRequest req) {
+        // OJO: si cambiaste la unique constraint a (creado_por_id, nombre),
+        // este exists puede necesitar luego el usuario creador.
         if (repo.existsByNombreIgnoreCase(req.getNombre())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Nombre de modelo ya existe");
         }
+
         ModeloBarco m = new ModeloBarco();
         m.setNombre(req.getNombre());
+        m.setColor(req.getColor());
         m.setDescripcion(req.getDescripcion());
-        if (req.getVelMax() != null) m.setVelMax(req.getVelMax());
-        if (req.getAcelMax() != null) m.setAcelMax(req.getAcelMax());
-        if (req.getManiobrabilidad() != null) m.setManiobrabilidad(req.getManiobrabilidad());
+
+        // Solo sobreescribimos si vienen; si no, se quedan defaults del entity
+        if (req.getVelMax() != null) {
+            m.setVelMax(req.getVelMax());
+        }
+        if (req.getAcelMax() != null) {
+            m.setAcelMax(req.getAcelMax());
+        }
+        if (req.getManiobrabilidad() != null) {
+            m.setManiobrabilidad(req.getManiobrabilidad());
+        }
+
         return toDto(repo.save(m));
     }
 
@@ -43,7 +56,8 @@ public class ModeloBarcoServiceImpl implements ModeloBarcoService {
     public List<ModeloBarcoDto> list(String q) {
         List<ModeloBarco> all = repo.findAll();
         return all.stream()
-                .filter(m -> q == null || m.getNombre().toLowerCase().contains(q.toLowerCase()))
+                .filter(m -> q == null
+                        || m.getNombre().toLowerCase().contains(q.toLowerCase()))
                 .map(this::toDto)
                 .toList();
     }
@@ -58,6 +72,7 @@ public class ModeloBarcoServiceImpl implements ModeloBarcoService {
         }
 
         m.setNombre(req.getNombre());
+        m.setColor(req.getColor());
         m.setDescripcion(req.getDescripcion());
         m.setVelMax(req.getVelMax());
         m.setAcelMax(req.getAcelMax());
@@ -76,11 +91,24 @@ public class ModeloBarcoServiceImpl implements ModeloBarcoService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Nombre de modelo ya existe");
         }
 
-        if (req.getNombre() != null) m.setNombre(req.getNombre());
-        if (req.getDescripcion() != null) m.setDescripcion(req.getDescripcion());
-        if (req.getVelMax() != null) m.setVelMax(req.getVelMax());
-        if (req.getAcelMax() != null) m.setAcelMax(req.getAcelMax());
-        if (req.getManiobrabilidad() != null) m.setManiobrabilidad(req.getManiobrabilidad());
+        if (req.getNombre() != null) {
+            m.setNombre(req.getNombre());
+        }
+        if (req.getColor() != null) {
+            m.setColor(req.getColor());
+        }
+        if (req.getDescripcion() != null) {
+            m.setDescripcion(req.getDescripcion());
+        }
+        if (req.getVelMax() != null) {
+            m.setVelMax(req.getVelMax());
+        }
+        if (req.getAcelMax() != null) {
+            m.setAcelMax(req.getAcelMax());
+        }
+        if (req.getManiobrabilidad() != null) {
+            m.setManiobrabilidad(req.getManiobrabilidad());
+        }
 
         return toDto(repo.save(m));
     }
@@ -91,20 +119,25 @@ public class ModeloBarcoServiceImpl implements ModeloBarcoService {
         try {
             repo.delete(m);
         } catch (DataIntegrityViolationException ex) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede eliminar: está referenciado por barcos");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "No se puede eliminar: está referenciado por barcos"
+            );
         }
     }
 
     // helpers
     private ModeloBarco find(Long id) {
         return repo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ModeloBarco no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "ModeloBarco no encontrado"));
     }
 
     private ModeloBarcoDto toDto(ModeloBarco m) {
         ModeloBarcoDto d = new ModeloBarcoDto();
         d.setId(m.getId());
         d.setNombre(m.getNombre());
+        d.setColor(m.getColor());
         d.setDescripcion(m.getDescripcion());
         d.setVelMax(m.getVelMax());
         d.setAcelMax(m.getAcelMax());

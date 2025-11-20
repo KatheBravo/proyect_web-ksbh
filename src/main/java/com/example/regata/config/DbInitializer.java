@@ -92,6 +92,8 @@ public class DbInitializer {
                     ModeloBarco m = new ModeloBarco();
                     m.setNombre("Modelo " + i);
                     m.setDescripcion("Modelo auto " + i);
+                    // color del modelo
+                    m.setColor(String.format("#%06X", rnd.nextInt(0xFFFFFF)));
                     // valores razonables
                     m.setVelMax(2 + rnd.nextInt(3));   // 2..4
                     m.setAcelMax(1);                   // 1
@@ -117,7 +119,6 @@ public class DbInitializer {
                     for (int i = 1; i <= 10; i++) {
                         Barco b = new Barco();
                         b.setNombre("B-" + u.getNombre() + "-" + i);
-                        b.setColor(String.format("#%06X", rnd.nextInt(0xFFFFFF)));
                         b.setUsuario(u);
                         // modelo aleatorio
                         b.setModelo(modelos.get(rnd.nextInt(modelos.size())));
