@@ -36,16 +36,38 @@ public class PartidaServiceImpl implements PartidaService {
     // ─────────────────────────── crear ───────────────────────────
     @Override
     public EstadoPartidaDto crear(CreatePartidaRequest req) {
+
+        // 1) Resolver mapa
         Mapa mapa = (req.getMapaId() != null)
                 ? mapaRepo.findById(req.getMapaId()).orElseThrow(() ->
-                    new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "mapaId no existe"))
+                new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "mapaId no existe"))
                 : mapaRepo.findAll().stream().findFirst().orElseThrow(() ->
-                    new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "No hay mapas creados"));
+                new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "No hay mapas creados"));
 
+        // 2) Resolver host (obligatorio porque Partida.host es NOT NULL)
+        if (req.getHostUsuarioId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "hostUsuarioId es obligatorio para crear la partida"
+            );
+        }
+
+        Usuario host = usuarioRepo.findById(req.getHostUsuarioId())
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "hostUsuarioId no existe"));
+
+        // 3) Crear partida
         Partida p = new Partida();
         p.setMapa(mapa);
-        if (req.getNombre() != null && !req.getNombre().isBlank()) p.setNombre(req.getNombre());
-        if (req.getMaxJugadores() != null) p.setMaxJugadores(req.getMaxJugadores());
+        p.setHost(host); // 👈 IMPORTANTE
+
+        if (req.getNombre() != null && !req.getNombre().isBlank()) {
+            p.setNombre(req.getNombre());
+        }
+        if (req.getMaxJugadores() != null) {
+            p.setMaxJugadores(req.getMaxJugadores());
+        }
+
         p = partidaRepo.save(p);
 
         return toEstadoDto(p, participantesDe(p.getId()), mapaLines(mapa));
@@ -59,17 +81,24 @@ public class PartidaServiceImpl implements PartidaService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La partida no está en WAITING");
         }
 
-        if (participanteRepo.countByPartidaId(partidaId) >= p.getMaxJugadores()) {
+        long numParticipantes = participanteRepo.countByPartidaId(partidaId);
+        if (numParticipantes >= p.getMaxJugadores()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Partida llena");
         }
 
         Usuario u = usuarioRepo.findById(req.getUsuarioId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "usuarioId no existe"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "usuarioId no existe"));
+
         Barco b = barcoRepo.findById(req.getBarcoId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "barcoId no existe"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "barcoId no existe"));
 
         if (!Objects.equals(b.getUsuario().getId(), u.getId())) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "El barco no pertenece al usuario");
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "El barco no pertenece al usuario"
+            );
         }
         if (participanteRepo.existsByPartidaIdAndUsuarioId(partidaId, u.getId())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El usuario ya está en la partida");
@@ -82,9 +111,13 @@ public class PartidaServiceImpl implements PartidaService {
         List<String> lines = mapaLines(p.getMapa());
         List<int[]> starts = findStarts(lines); // [x,y]
         if (starts.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, "El mapa no tiene posiciones 'P'");
+            throw new ResponseStatusException(
+                    HttpStatus.PRECONDITION_FAILED,
+                    "El mapa no tiene posiciones 'P'"
+            );
         }
-        int orden = participanteRepo.countByPartidaId(partidaId);
+
+        int orden = (int) numParticipantes;
         int[] s = starts.get(orden % starts.size());
 
         Participante part = new Participante();
@@ -100,6 +133,7 @@ public class PartidaServiceImpl implements PartidaService {
         part.setOrden(orden);
         participanteRepo.save(part);
 
+        // 👇 ya NO tocamos p.setHost(...) aquí. El host viene de crear().
         return toEstadoDto(p, participantesDe(partidaId), lines);
     }
 
@@ -110,10 +144,16 @@ public class PartidaServiceImpl implements PartidaService {
         if (p.getEstado() != PartidaEstado.WAITING) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La partida no está en WAITING");
         }
-        if (participanteRepo.countByPartidaId(partidaId) < 2) {
-            // Si quieres permitir 1vCPU, cambia este número a 1
-            throw new ResponseStatusException(HttpStatus.PRECONDITION_FAILED, "Se requieren al menos 2 participantes");
+
+        long numParticipantes = participanteRepo.countByPartidaId(partidaId);
+        if (numParticipantes < 2) {
+            // siempre multi-jugador → mínimo 2
+            throw new ResponseStatusException(
+                    HttpStatus.PRECONDITION_FAILED,
+                    "Se requieren al menos 2 participantes"
+            );
         }
+
         p.setEstado(PartidaEstado.RUNNING);
         p.setIniciadoEn(Instant.now());
         partidaRepo.save(p);
@@ -135,8 +175,10 @@ public class PartidaServiceImpl implements PartidaService {
         if (p.getEstado() != PartidaEstado.RUNNING) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La partida no está en RUNNING");
         }
+
         Participante part = participanteRepo.findByIdAndPartidaId(req.getParticipanteId(), partidaId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "participanteId inválido"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "participanteId inválido"));
 
         if (!part.isVivo() || part.isLlegoMeta()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "El participante no puede moverse");
@@ -150,7 +192,10 @@ public class PartidaServiceImpl implements PartidaService {
 
         // Validar aceleración |acc| <= acelMax
         if (Math.abs(accX) > modelo.getAcelMax() || Math.abs(accY) > modelo.getAcelMax()) {
-            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Aceleración inválida (excede acelMax)");
+            throw new ResponseStatusException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Aceleración inválida (excede acelMax)"
+            );
         }
 
         // actualizar velocidad con clamp por componente
@@ -203,7 +248,8 @@ public class PartidaServiceImpl implements PartidaService {
     // ─────────────────────────── helpers ───────────────────────────
     private Partida findPartida(Long id) {
         return partidaRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida no encontrada"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida no encontrada"));
     }
 
     private List<Participante> participantesDe(Long partidaId) {
@@ -219,7 +265,9 @@ public class PartidaServiceImpl implements PartidaService {
         for (int y = 0; y < lines.size(); y++) {
             String row = lines.get(y);
             for (int x = 0; x < row.length(); x++) {
-                if (row.charAt(x) == 'P') starts.add(new int[]{x, y});
+                if (row.charAt(x) == 'P') {
+                    starts.add(new int[]{x, y});
+                }
             }
         }
         return starts;
@@ -233,8 +281,10 @@ public class PartidaServiceImpl implements PartidaService {
         return Math.max(lo, Math.min(hi, v));
     }
 
-    // mapping
-    private EstadoPartidaDto toEstadoDto(Partida p, List<Participante> parts, List<String> lines) {
+    // ───────────────────── mapping a DTO ─────────────────────
+    private EstadoPartidaDto toEstadoDto(Partida p,
+                                         List<Participante> parts,
+                                         List<String> lines) {
         EstadoPartidaDto dto = new EstadoPartidaDto();
         dto.setId(p.getId());
         dto.setNombre(p.getNombre());
@@ -242,7 +292,19 @@ public class PartidaServiceImpl implements PartidaService {
         dto.setMapaNombre(p.getMapa().getNombre());
         dto.setLayout(lines);
         dto.setMaxJugadores(p.getMaxJugadores());
-        dto.setGanadorParticipanteId(p.getGanador() != null ? p.getGanador().getId() : null);
+        dto.setGanadorParticipanteId(
+                p.getGanador() != null ? p.getGanador().getId() : null
+        );
+
+        // Host info
+        Usuario host = p.getHost();
+        if (host != null) {
+            dto.setHostUsuarioId(host.getId());
+            dto.setHostUsuarioNombre(host.getNombre());
+        } else {
+            dto.setHostUsuarioId(null);
+            dto.setHostUsuarioNombre(null);
+        }
 
         List<ParticipanteDto> pdtos = parts.stream().map(part -> {
             ParticipanteDto d = new ParticipanteDto();
@@ -260,6 +322,7 @@ public class PartidaServiceImpl implements PartidaService {
             d.setOrden(part.getOrden());
             return d;
         }).toList();
+
         dto.setParticipantes(pdtos);
         return dto;
     }

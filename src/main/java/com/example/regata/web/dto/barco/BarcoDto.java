@@ -10,8 +10,6 @@ public class BarcoDto {
 
     private Long modeloId;
     private String modeloNombre;
-    // 🔥 si quieres, puedes agregar aquí:
-    // private String modeloColor;
 
     // NUEVO
     private int posX;

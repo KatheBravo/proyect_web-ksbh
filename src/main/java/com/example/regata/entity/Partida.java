@@ -19,6 +19,12 @@ public class Partida {
             foreignKey = @ForeignKey(name = "fk_partida_mapa"))
     private Mapa mapa;
 
+    // Host puede ser null al crear
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "host_id", nullable = true,
+            foreignKey = @ForeignKey(name = "fk_partida_host"))
+    private Usuario host;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PartidaEstado estado = PartidaEstado.WAITING;
@@ -26,7 +32,6 @@ public class Partida {
     @Column(name = "max_jugadores", nullable = false)
     private int maxJugadores = 4;
 
-    // Ganador (opcional)
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ganador_participante_id",
             foreignKey = @ForeignKey(name = "fk_partida_ganador"))
@@ -46,21 +51,33 @@ public class Partida {
         creadoEn = Instant.now();
     }
 
-    // Getters / Setters
+    // Getters / setters…
+
     public Long getId() { return id; }
+
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
+
     public Mapa getMapa() { return mapa; }
     public void setMapa(Mapa mapa) { this.mapa = mapa; }
+
+    public Usuario getHost() { return host; }
+    public void setHost(Usuario host) { this.host = host; }
+
     public PartidaEstado getEstado() { return estado; }
     public void setEstado(PartidaEstado estado) { this.estado = estado; }
+
     public int getMaxJugadores() { return maxJugadores; }
     public void setMaxJugadores(int maxJugadores) { this.maxJugadores = maxJugadores; }
+
     public Participante getGanador() { return ganador; }
     public void setGanador(Participante ganador) { this.ganador = ganador; }
+
     public Instant getCreadoEn() { return creadoEn; }
+
     public Instant getIniciadoEn() { return iniciadoEn; }
     public void setIniciadoEn(Instant iniciadoEn) { this.iniciadoEn = iniciadoEn; }
+
     public Instant getFinalizadoEn() { return finalizadoEn; }
     public void setFinalizadoEn(Instant finalizadoEn) { this.finalizadoEn = finalizadoEn; }
 }

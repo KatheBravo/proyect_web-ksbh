@@ -4,10 +4,10 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "participantes",
-       uniqueConstraints = {
-           @UniqueConstraint(name = "uq_partida_usuario", columnNames = {"partida_id", "usuario_id"}),
-           @UniqueConstraint(name = "uq_partida_barco", columnNames = {"partida_id", "barco_id"})
-       })
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uq_partida_usuario", columnNames = {"partida_id", "usuario_id"}),
+                @UniqueConstraint(name = "uq_partida_barco", columnNames = {"partida_id", "barco_id"})
+        })
 public class Participante {
 
     @Id
