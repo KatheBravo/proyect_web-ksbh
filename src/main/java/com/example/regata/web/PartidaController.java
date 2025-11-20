@@ -6,6 +6,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/partidas")
 public class PartidaController {
@@ -19,6 +21,11 @@ public class PartidaController {
     @PostMapping
     public ResponseEntity<EstadoPartidaDto> crear(@Valid @RequestBody CreatePartidaRequest req) {
         return ResponseEntity.ok(service.crear(req));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<EstadoPartidaDto>> listar() {
+        return ResponseEntity.ok(service.listar());
     }
 
     @PostMapping("/{id}/join")

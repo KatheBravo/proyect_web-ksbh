@@ -37,29 +37,16 @@ public class PartidaServiceImpl implements PartidaService {
     @Override
     public EstadoPartidaDto crear(CreatePartidaRequest req) {
 
-        // 1) Resolver mapa
+        // 1) Resolver mapa: si viene mapaId lo usamos, si no, el primer mapa
         Mapa mapa = (req.getMapaId() != null)
                 ? mapaRepo.findById(req.getMapaId()).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "mapaId no existe"))
                 : mapaRepo.findAll().stream().findFirst().orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.PRECONDITION_REQUIRED, "No hay mapas creados"));
 
-        // 2) Resolver host (obligatorio porque Partida.host es NOT NULL)
-        if (req.getHostUsuarioId() == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
-                    "hostUsuarioId es obligatorio para crear la partida"
-            );
-        }
-
-        Usuario host = usuarioRepo.findById(req.getHostUsuarioId())
-                .orElseThrow(() ->
-                        new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "hostUsuarioId no existe"));
-
-        // 3) Crear partida
+        // 2) Crear partida SIN host (host se define cuando se une el primer jugador)
         Partida p = new Partida();
         p.setMapa(mapa);
-        p.setHost(host); // 👈 IMPORTANTE
 
         if (req.getNombre() != null && !req.getNombre().isBlank()) {
             p.setNombre(req.getNombre());
@@ -133,7 +120,12 @@ public class PartidaServiceImpl implements PartidaService {
         part.setOrden(orden);
         participanteRepo.save(part);
 
-        // 👇 ya NO tocamos p.setHost(...) aquí. El host viene de crear().
+        // Si es el primer participante y aún no hay host, este usuario pasa a ser el host
+        if (orden == 0 && p.getHost() == null) {
+            p.setHost(u);
+            partidaRepo.save(p);
+        }
+
         return toEstadoDto(p, participantesDe(partidaId), lines);
     }
 
@@ -147,7 +139,7 @@ public class PartidaServiceImpl implements PartidaService {
 
         long numParticipantes = participanteRepo.countByPartidaId(partidaId);
         if (numParticipantes < 2) {
-            // siempre multi-jugador → mínimo 2
+            // siempre multijugador → mínimo 2
             throw new ResponseStatusException(
                     HttpStatus.PRECONDITION_FAILED,
                     "Se requieren al menos 2 participantes"
@@ -243,6 +235,15 @@ public class PartidaServiceImpl implements PartidaService {
 
         participanteRepo.save(part);
         return toEstadoDto(p, participantesDe(partidaId), lines);
+    }
+
+    // ─────────────────────────── listar ───────────────────────────
+    @Override
+    public java.util.List<EstadoPartidaDto> listar() {
+        java.util.List<Partida> partidas = partidaRepo.findAll();
+        return partidas.stream()
+                .map(p -> toEstadoDto(p, participantesDe(p.getId()), mapaLines(p.getMapa())))
+                .toList();
     }
 
     // ─────────────────────────── helpers ───────────────────────────
